@@ -1,0 +1,896 @@
+package data;
+
+public record Card(int id, String word, Team team) {}package data;
+
+import java.util.List;
+
+public record Clue(String clue, int count, List<Integer> refers, int risk) {}package data;
+
+import util.AutomationException;
+import util.Point;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+
+public final class Config {
+    private Config() {}
+    private static final Properties properties = new Properties();
+    private static final String CONFIG_FILE = "config.properties";
+
+    static {
+        try (InputStream stream = Config.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+            if (stream == null) {
+                throw new AutomationException(ErrorCode.CONFIG_FILE);
+            } else {
+                properties.load(stream);
+            }
+        } catch (IOException e) {
+            throw new AutomationException(ErrorCode.CONFIG_FILE, e);
+        }
+    }
+
+    private static String getString(String key) {
+        return properties.getProperty(key);
+    }
+
+    private static int getInt(String key) {
+        return Integer.parseInt(properties.getProperty(key));
+    }
+
+    private static double getDouble(String key) {
+        return Double.parseDouble(properties.getProperty(key));
+    }
+
+    private static Point getPoint(String key) {
+        String[] coordinates = properties.getProperty(key).split(",");
+        return new Point(Integer.parseInt(coordinates[0]), Integer.parseInt(coordinates[1]));
+    }
+
+    // Frequently tweaked
+    public static final double FLIP_RISK = getDouble("FLIP_RISK");
+    public static final double END_GUESSING = getDouble("END_GUESSING");
+    public static final int MISSIONS_TO_PLAY = getInt("MISSIONS_TO_PLAY");
+    public static final double SECURE_USER_SPYMASTER = getDouble("SECURE_USER_SPYMASTER");
+
+    // Device level
+    public static final String APP_LAUNCHER = getString("APP_LAUNCHER");
+    public static final String APP_PACKAGE = getString("APP_PACKAGE");
+    public static final int SECURE_USER = getInt("SECURE_USER");
+    public static final int UNSECURE_USER = getInt("UNSECURE_USER");
+    public static int CURRENT_USER = getInt("CURRENT_USER");
+    public static final String DEVICE_PASSWORD = System.getenv("DEVICE_PASSWORD");
+    public static final Point SWIPE_START = getPoint("SWIPE_START");
+    public static final Point SWIPE_END = getPoint("SWIPE_END");
+    public static final String SWIPE_DURATION = getString("SWIPE_DURATION");
+
+    // AI Studio
+    public static final String GEMINI_MODEL = getString("GEMINI_MODEL");
+    public static final String GEMINI_MIME = getString("GEMINI_MIME");
+    public static final String GEMINI_PROMPT = getString("GEMINI_PROMPT");
+
+    // Tesseract OCR
+    public static final String TESSERACT_PATH = getString("TESSERACT_PATH");
+    public static final String TESSERACT_LANGUAGE = getString("TESSERACT_LANGUAGE");
+    public static final int TESSERACT_MODE = getInt("TESSERACT_MODE");
+    public static final String TESSERACT_WHITELIST = getString("TESSERACT_WHITELIST");
+
+    // Resource Paths
+    public static final String BASE_WORDS_PATH = getString("BASE_WORDS_PATH");
+    public static final String LOCAL_SS_PATH = getString("LOCAL_SS_PATH");
+    public static final String DEVICE_SS_PATH = getString("DEVICE_SS_PATH");
+
+    // Device Delays
+    public static final int SWITCH_DELAY = getInt("SWITCH_DELAY");
+    public static final int PASSWORD_DELAY = getInt("PASSWORD_DELAY");
+    public static final int START_DELAY = getInt("START_DELAY");
+    public static final int STOP_DELAY = getInt("STOP_DELAY");
+
+    // Game Delays
+    public static final double TAP_DELAY = getDouble("TAP_DELAY");
+    public static final double TYPE_DELAY = getDouble("TYPE_DELAY");
+    public static final int REWARD_DELAY = getInt("REWARD_DELAY");
+    public static final int RETRY_DELAY = getInt("RETRY_DELAY");
+    public static final int MAX_RETRIES = getInt("MAX_RETRIES");
+    public static final int WATCH_DELAY = getInt("WATCH_DELAY");
+
+    // Board
+    public static final int BOARD_ROWS = getInt("BOARD_ROWS");
+    public static final int BOARD_COLUMNS = getInt("BOARD_COLUMNS");
+    public static final int TEAM_CARDS = getInt("TEAM_CARDS");
+
+    // Card
+    public static final List<Point> CARD_POINTERS;
+    public static final int CROP_WIDTH = getInt("CROP_WIDTH");
+    public static final int CROP_HEIGHT = getInt("CROP_HEIGHT");
+    public static final Point COLOR_OFFSET = getPoint("COLOR_OFFSET");
+    static {
+        Point CARD_POINTERS_START = getPoint("CARD_POINTERS_START");
+        Point CARD_POINTERS_OFFSET = getPoint("CARD_POINTERS_OFFSET");
+        List<Point> pointers = new ArrayList<>(BOARD_ROWS * BOARD_COLUMNS);
+
+        for (int i = 0; i < BOARD_ROWS; i++) {
+            for (int j = 0; j < BOARD_COLUMNS; j++) {
+                pointers.add(new Point(
+                    CARD_POINTERS_START.x + j * CARD_POINTERS_OFFSET.x,
+                    CARD_POINTERS_START.y + i * CARD_POINTERS_OFFSET.y
+                ));
+            }
+        }
+
+        CARD_POINTERS = Collections.unmodifiableList(pointers);
+    }
+
+    // Bottom UI
+    public static final Point CLUE_FIELD = getPoint("CLUE_FIELD");
+    public static final Point END_TURN = getPoint("END_TURN");
+    public static final Point CLUE_NUMBER = getPoint("CLUE_NUMBER");
+    public static final Point ZERO_CLUE = getPoint("ZERO_CLUE");
+    public static final Point INFINITY_CLUE = getPoint("INFINITY_CLUE");
+
+    // Game UI
+    public static final Point EXIT_MISSION = getPoint("EXIT_MISSION");
+    public static final Point JOIN_MISSION = getPoint("JOIN_MISSION");
+    public static final Point CONTINUE_TO_MENU = getPoint("CONTINUE_TO_MENU");
+    public static final Point TEAM_V_ASSASSIN = getPoint("TEAM_V_ASSASSIN");
+    public static final Point LEFTMOST_MISSION = CARD_POINTERS.get(getInt("LEFTMOST_MISSION_INDEX"));
+    public static final Point GOT_IT = getPoint("GOT_IT");
+    public static final Point OPEN_LOGS = getPoint("OPEN_LOGS");
+
+    // Color Thresholds
+    public static final int RED_DOMINANCE = getInt("RED_DOMINANCE");
+    public static final int BLUE_DOMINANCE = getInt("BLUE_DOMINANCE");
+    public static final int WHITE_MIN = getInt("WHITE_MIN");
+    public static final int BEIGE_MIN = getInt("BEIGE_MIN");
+    public static final int BLACK_MAX = getInt("BLACK_MAX");
+}
+package data;
+
+public enum ErrorCode {
+    // data.Config
+    CONFIG_FILE("Unable to load the configuration file."),
+
+    // logic.GeminiSpymaster
+    GEMINI_PROMPT("Prompt text file for Gemini is null"),
+    FIRST_CLUE("Failed to get the first clue from Gemini."),
+    NEXT_CLUE("Failed to get the next clue from Gemini."),
+
+    // util.ExecuteCommand
+    PROCESS_EXIT("Executed process returned non-zero exit code."),
+    EXECUTE_COMMAND("Failed to execute the command."),
+    SCREENSHOT("Failed to read the screenshot."),
+
+    // util.ImageProcessor
+    STARTING_BOARD("Failed to prepare the board from the screenshot."),
+
+    // util.SleepingBeauty
+    SLEEP_INTERRUPTED("Sleep interrupted."),
+
+    // logic.Mission
+    NOT_SAME("Both users are not in the same mission"),
+
+    // logic.ActionConfirmer
+    MAX_RETRIES("Max retries reached before being able to confirm the action.");
+
+    private final String message;
+
+    ErrorCode(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+package data;
+
+public enum Team {
+    RED,
+    BLUE,
+    ASSASSIN,
+    BYSTANDER
+}package logic;
+
+import data.ErrorCode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import util.AutomationException;
+import util.ExecuteCommand;
+
+import java.util.Arrays;
+import java.util.function.BooleanSupplier;
+
+import static data.Config.*;
+import static util.ExecuteCommand.taps;
+import static util.ImageProcessor.*;
+import static util.SleepingBeauty.sleep;
+
+public class ActionConfirmer {
+    private ActionConfirmer() {}
+    private static final Logger logger = LogManager.getLogger(ActionConfirmer.class);
+
+    public static void joinMission() {
+        taps(JOIN_MISSION, TEAM_V_ASSASSIN);
+        retry(
+            () -> isBoxWhite(0) && isBoxWhite(CARD_POINTERS.size() - 1),
+            "Player hasn't joined the mission yet."
+        );
+        logger.info("Watching the consequences of other player's (and maybe Assassin's) turn.");
+        sleep(WATCH_DELAY);
+    }
+
+    public static void reenterMission(boolean zeroClue) {
+        taps(LEFTMOST_MISSION);
+        retry(
+            () -> Arrays.stream(getRGB(OPEN_LOGS)).sum() > WHITE_MIN,
+            "Player hasn't reentered their existing mission to make a turn yet."
+        );
+        if (zeroClue) { taps(GOT_IT); }
+        sleep(WATCH_DELAY);
+    }
+
+    public static void flipCard(int id) {
+        taps(CARD_POINTERS.get(id), CARD_POINTERS.get(id));
+        retry(
+            () -> !isBoxWhite(id),
+            "Operative hasn't flipped their card yet."
+        );
+    }
+
+    public static void endTurn() {
+        taps(END_TURN);
+        retry(
+            () -> Arrays.stream(getRGB(END_TURN)).sum() < WHITE_MIN,
+            "Player hasn't ended their turn yet."
+        );
+    }
+
+    public static void switchPlayer() {
+        ExecuteCommand.switchPlayer();
+        retry(
+            () -> Arrays.stream(getRGB(CONTINUE_TO_MENU)).sum() > BLACK_MAX,
+            "Players haven't been switched yet."
+        );
+    }
+
+    public static void retry(BooleanSupplier condition, String message) {
+        for (int i = 1; i <= MAX_RETRIES; i++) {
+            replaceImage();
+
+            if (condition.getAsBoolean()) { break; }
+            if (i == MAX_RETRIES) { throw new AutomationException(ErrorCode.MAX_RETRIES); }
+
+            logger.warn("{} Rechecking after {} seconds", message, RETRY_DELAY);
+            sleep(RETRY_DELAY);
+        }
+    }
+}package logic;
+
+import com.google.genai.Chat;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.Schema;
+import com.google.gson.Gson;
+import data.Clue;
+import data.ErrorCode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import util.AutomationException;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.genai.types.Type.Known.*;
+import static data.Config.*;
+
+public class GeminiSpymaster {
+    private static final Logger logger = LogManager.getLogger(GeminiSpymaster.class);
+    private static final Gson gson = new Gson();
+    private static final Client client = new Client();
+    private final Chat chat;
+    private final List<Clue> clues = new ArrayList<>();
+
+    private static final Schema Int = Schema.builder().type(INTEGER).build();
+    private static final Map<String, Schema> properties = Map.of(
+        "clue", Schema.builder().type(STRING).build(),
+        "count", Int,
+        "refers", Schema.builder().type(ARRAY).items(Int).build(),
+        "risk", Int
+    );
+    private static final GenerateContentConfig config = GenerateContentConfig
+        .builder()
+        .responseMimeType(GEMINI_MIME)
+        .responseSchema(Schema.builder().type(OBJECT).properties(properties).build())
+        .build();
+
+    public GeminiSpymaster() {
+        this.chat = client.chats.create(GEMINI_MODEL, config);
+    }
+
+    public Clue firstClue(String boardString) {
+        try(InputStream stream = GeminiSpymaster.class.getResourceAsStream(GEMINI_PROMPT)) {
+            if (stream == null) {
+                throw new AutomationException(ErrorCode.GEMINI_PROMPT);
+            } else {
+                String prompt = new String(stream.readAllBytes(), StandardCharsets.UTF_8)
+                    + "\n\n" + boardString;
+                return nextClue(prompt);
+            }
+        } catch (Exception e) {
+            throw new AutomationException(ErrorCode.FIRST_CLUE, e);
+        }
+    }
+
+    public Clue nextClue(String boardString) {
+        logger.info("Asking clue from Gemini for the board: \n{}", boardString);
+        try {
+            clues.add(gson.fromJson(
+                this.chat.sendMessage(boardString).text(),
+                Clue.class
+            ));
+            return clues.getLast();
+        } catch (Exception e) {
+            throw new AutomationException(ErrorCode.NEXT_CLUE, e);
+        }
+    }
+
+    public static void close() {
+        client.close();
+    }
+
+    public List<Clue> getClues() { return clues; }
+    public Chat getChat() { return chat; }
+}
+package logic;
+
+import data.ErrorCode;
+import data.Card;
+import data.Team;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import util.AutomationException;
+
+import java.util.*;
+import java.util.stream.IntStream;
+
+import static data.Config.*;
+import static data.Team.*;
+import static logic.ActionConfirmer.joinMission;
+import static util.ExecuteCommand.*;
+import static util.ImageProcessor.*;
+import static util.SleepingBeauty.sleep;
+
+public class Mission {
+    private static final Logger logger = LogManager.getLogger(Mission.class);
+    private final int spymasterUser;
+    private final GeminiSpymaster spymaster;
+    private final boolean[] isFlipped;
+    private final List<Card> board;
+    private final Team team;
+    private final int[] idsInOperative;
+
+    public Mission(boolean firstMission) {
+        this.spymasterUser = Math.random() < SECURE_USER_SPYMASTER ? SECURE_USER : UNSECURE_USER;
+        logger.info("Spymaster for this user: {}", spymasterUser);
+        this.spymaster = new GeminiSpymaster();
+        this.isFlipped = new boolean[CARD_POINTERS.size()];
+
+        if (firstMission) {
+            logger.info("Buffer time to ensure the current user is inside the game.");
+        } else {
+            logger.info("Waiting for post mission animations to end.");
+        }
+        sleep(REWARD_DELAY);
+
+        if (spymasterUser == CURRENT_USER) {
+            logger.info("Current user is the spymaster, No need to switch players.");
+            if (!firstMission) { taps(CONTINUE_TO_MENU, EXIT_MISSION); }
+        } else { ActionConfirmer.switchPlayer(); }
+
+        logger.info("Spymaster is joining a mission.");
+        joinMission();
+
+        this.board = startingBoard();
+        this.team = board.stream()
+            .filter(card -> card.team() == RED)
+            .count() == TEAM_CARDS ? RED : BLUE;
+
+        logger.info("Spymaster is going to give their first clue for this mission.");
+        Turn.spymaster(spymaster.firstClue(boardString(board, isFlipped, team)));
+
+        this.idsInOperative = operativeSetup(board);
+
+        logger.info("Operative is going to make their first guess for this mission.");
+        Turn.operative(spymaster.getClues(), idsInOperative);
+    }
+
+    public static int[] operativeSetup(List<Card> board) {
+        ActionConfirmer.switchPlayer();
+        joinMission();
+        logger.info("Operative has joined a mission.");
+
+        List<String> operativeWords = startingBoard()
+            .stream()
+            .map(Card::word)
+            .toList();
+        logger.debug("Word order in operative's view: {}", operativeWords);
+
+        int[] idsInOperative = IntStream
+            .range(0, CARD_POINTERS.size())
+            .map(id -> operativeWords.indexOf(board.get(id).word()))
+            .toArray();
+
+        if (Arrays.stream(idsInOperative).anyMatch(id -> id == -1)) {
+            throw new AutomationException(ErrorCode.NOT_SAME);
+        }
+
+        return idsInOperative;
+    }
+
+    public boolean isOver() {
+        replaceImage();
+        int remainingRed = 0, remainingBlue = 0;
+
+        for (Card card : board) {
+            isFlipped[card.id()] = !isBoxWhite(card.id());
+            if (isFlipped[card.id()]) { if (card.team() == ASSASSIN) { return true; }}
+            else if (card.team() == RED) { remainingRed++; }
+            else if (card.team() == BLUE) { remainingBlue++; }
+        }
+
+        return remainingRed == 0 || remainingBlue == 0;
+    }
+
+    public static String boardString(List<Card> board, boolean[] isFlipped, Team team) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("USER: \n")
+            .append("Give a clue for team ")
+            .append(team)
+            .append("'s yet to be flipped cards")
+            .append(" while trying to avoid other cards.")
+            .append("\n")
+            .append("Current state of the board:\n");
+
+        for (Card card : board) {
+            sb.append(card.id()).append(" ");
+            sb.append(card.word()).append(" - ");
+            sb.append(isFlipped[card.id()] ? "Flipped" : "Unflipped").append(" ");
+
+            sb.append(card.team());
+            if (card.team() == team) { sb.append(" <- Your Team"); }
+            else if (card.team() == ASSASSIN) sb.append("!!");
+
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    public String boardString() {
+        return boardString(board, isFlipped, team);
+    }
+
+    public int getSpymasterUser() { return spymasterUser; }
+    public GeminiSpymaster getSpymaster() { return spymaster; }
+    public boolean[] getIsFlipped() { return isFlipped; }
+    public List<Card> getBoard() { return board; }
+    public Team getTeam() { return team; }
+    public int[] getIdsInOperative() { return idsInOperative; }
+}
+package logic;
+
+import data.Clue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.List;
+import java.util.Stack;
+
+import static data.Config.*;
+import static logic.ActionConfirmer.endTurn;
+import static logic.ActionConfirmer.flipCard;
+import static util.ExecuteCommand.*;
+import static util.ImageProcessor.isBoxWhite;
+
+public class Turn {
+    private static final Logger logger = LogManager.getLogger(Turn.class);
+
+    public static void spymaster(Clue clue) {
+        logger.info("Spymaster is going to give the clue: {}", clue);
+        clue.refers().forEach(id ->  taps(CARD_POINTERS.get(id)));
+
+        taps(CLUE_FIELD);
+        typeClue(clue.clue());
+        taps(TEAM_V_ASSASSIN, CLUE_NUMBER, clue.count() == 0
+                ? ZERO_CLUE : clue.count() == -1
+                ? INFINITY_CLUE : CLUE_NUMBER);
+
+        endTurn();
+        logger.info("Spymaster has ended their turn.");
+    }
+
+    public static void operative(List<Clue> clues, int[] idsInOperative) {
+        Stack<Integer> toGuess = new Stack<>();
+        Stack<Integer> toRisk = new Stack<>();
+
+        int count = clues.getLast().count();
+        if (count < 1) { count = TEAM_CARDS; }
+
+        for (Clue clue : clues) {
+            int flips = 0;
+
+            for (Integer id : clue.refers().reversed()) {
+                if (isBoxWhite(id)) {
+                    toGuess.remove(id);
+                    toGuess.push(id);
+                } else { flips++; }
+            }
+
+            if (flips < clue.refers().size() && clue.risk() > -1) {
+                toRisk.push(clue.risk());
+            }
+        }
+
+        logger.debug("Operative's guess stack: {}", toGuess);
+        logger.debug("Operative's risk stack: {}", toRisk);
+
+        for (int i = 0; i < Math.min(count + 1, toGuess.size()); i++) {
+            if (Math.random() < END_GUESSING * i) {
+                logger.info("Operative has stopped guessing for this turn.");
+                break;
+            } else if (Math.random() < FLIP_RISK * i) {
+                logger.info("Operative is going to flip the risk card: {}", toRisk.peek());
+                flipCard(idsInOperative[toRisk.pop()]);
+                break;
+            } else {
+                logger.info("Operative is going to flip the team card: {}", toGuess.peek());
+                flipCard(idsInOperative[toGuess.pop()]);
+                if (i == count) { return; }
+            }
+
+        }
+
+        endTurn();
+        logger.info("Operative has ended their turn.");
+    }
+
+    public static void team(Mission mission) {
+        GeminiSpymaster spymaster = mission.getSpymaster();
+
+        ActionConfirmer.switchPlayer();
+        ActionConfirmer.reenterMission(false);
+        spymaster(spymaster.nextClue(mission.boardString()));
+
+        ActionConfirmer.switchPlayer();
+        ActionConfirmer.reenterMission(spymaster.getClues().getLast().count() == 0);
+        operative(spymaster.getClues(), mission.getIdsInOperative());
+    }
+}
+package util;
+
+import data.ErrorCode;
+
+public class AutomationException extends RuntimeException {
+    private final ErrorCode errorCode;
+
+    public AutomationException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode;
+    }
+
+    public AutomationException(ErrorCode errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
+    public AutomationException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode.getMessage(), cause);
+        this.errorCode = errorCode;
+    }
+
+    public AutomationException(ErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
+    }
+}
+package util;
+
+import data.ErrorCode;
+import logic.GeminiSpymaster;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import static data.Config.*;
+import static util.SleepingBeauty.randSleep;
+import static util.SleepingBeauty.sleep;
+
+public class ExecuteCommand {
+    private static final Logger logger = LogManager.getLogger(ExecuteCommand.class);
+
+    public static void execute(String... command) {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
+
+        try {
+            Process process = pb.start();
+            if (command[command.length - 1].equals(DEVICE_PASSWORD)) {
+                logger.info("Entering password...");
+            } else {
+                logger.info("Executing `{}`...", String.join(" ", command));
+            }
+
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append(System.lineSeparator());
+                }
+            }
+
+            if (process.waitFor() != 0) throw new AutomationException(ErrorCode.PROCESS_EXIT);
+            logger.info("Output of the command: {}", output.toString());
+        } catch (IOException | InterruptedException e) {
+            throw new AutomationException(ErrorCode.EXECUTE_COMMAND, e);
+        }
+    }
+
+    public static void taps(Point... sequence) {
+        for (Point coordinates : sequence) {
+            execute("adb", "shell", "input", "tap",
+                String.valueOf(coordinates.x), String.valueOf(coordinates.y));
+            randSleep(TAP_DELAY);
+        }
+    }
+
+    public static void screenShot() {
+        execute("adb", "shell", "screencap", "-p", DEVICE_SS_PATH);
+        execute("adb", "pull", DEVICE_SS_PATH, LOCAL_SS_PATH);
+    }
+
+    public static void typeClue(String clue) {
+        for (char c : clue.toLowerCase().trim().toCharArray()) {
+            execute("adb", "shell", "input", "keyevent", String.valueOf(c - 'a' + 29));
+            randSleep(TYPE_DELAY);
+        }
+    }
+
+    public static void switchPlayer() {
+        logger.info("Switching players...");
+        int switchUser = CURRENT_USER == SECURE_USER ? UNSECURE_USER : SECURE_USER;
+
+        execute("adb", "shell", "am", "force-stop", APP_PACKAGE);
+        logger.info("Waiting for the game to stop...");
+        sleep(STOP_DELAY);
+
+        execute("adb", "shell", "am", "switch-user", String.valueOf(switchUser));
+        logger.info("Waiting for users to be switched...");
+        sleep(SWITCH_DELAY);
+
+        CURRENT_USER = switchUser;
+        if (CURRENT_USER == SECURE_USER) {
+            execute("adb", "shell", "input", "swipe",
+                String.valueOf(SWIPE_START.x), String.valueOf(SWIPE_START.y),
+                String.valueOf(SWIPE_END.x), String.valueOf(SWIPE_END.y),
+                SWIPE_DURATION
+            );
+
+            logger.info("Waiting for password field to appear...");
+            sleep(PASSWORD_DELAY);
+            execute("adb", "shell", "input", "text", DEVICE_PASSWORD);
+            execute("adb", "shell", "input", "keyevent", "KEYCODE_ENTER");
+        }
+
+        execute("adb", "shell", "am", "start", APP_LAUNCHER);
+        logger.info("Waiting for the game to start...");
+        sleep(START_DELAY);
+    }
+
+    public static void endSession() {
+        logger.info("Ending session...");
+        execute("adb", "shell", "am", "force-stop", "--user", String.valueOf(SECURE_USER), APP_PACKAGE);
+        sleep(STOP_DELAY);
+        execute("adb", "shell", "am", "force-stop", "--user", String.valueOf(UNSECURE_USER), APP_PACKAGE);
+        sleep(STOP_DELAY);
+
+        execute("adb", "shell", "input", "keyevent", "KEYCODE_POWER");
+        GeminiSpymaster.close();
+        System.exit(0);
+    }
+}package util;
+
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
+import data.Card;
+import data.ErrorCode;
+import data.Team;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.RasterFormatException;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static data.Config.*;
+import static util.ExecuteCommand.screenShot;
+
+public class ImageProcessor {
+    private static final Logger logger = LogManager.getLogger(ImageProcessor.class);
+    private static final Tesseract tesseract;
+    private static BufferedImage image;
+
+    private ImageProcessor() {}
+
+    static {
+        logger.info("Initializing Tesseract");
+        tesseract = new Tesseract();
+        tesseract.setDatapath(TESSERACT_PATH);
+        tesseract.setLanguage(TESSERACT_LANGUAGE);
+        tesseract.setPageSegMode(TESSERACT_MODE);
+        tesseract.setVariable("tessedit_char_whitelist", TESSERACT_WHITELIST);
+        logger.info("Tesseract initialized");
+    }
+
+    public static void replaceImage() {
+        logger.info("Replacing current screenshot with a new one.");
+        screenShot();
+        try {
+            image = ImageIO.read(new File(LOCAL_SS_PATH));
+        } catch (IOException e) {
+            throw new AutomationException(ErrorCode.SCREENSHOT, e);
+        }
+    }
+
+    public static List<Card> startingBoard() {
+        try {
+            logger.info("Preparing the game board.");
+            List<Card> board = new ArrayList<>();
+
+            for (int id = 0; id < CARD_POINTERS.size(); id++) {
+                Point p = CARD_POINTERS.get(id);
+                BufferedImage crop = image.getSubimage(p.x, p.y, CROP_WIDTH, CROP_HEIGHT);
+                String word = tesseract.doOCR(crop).toUpperCase().trim();
+                board.add(new Card(id, word, cardTeam(p)));
+            }
+
+            logger.info("Game board has been prepared.");
+            logger.debug("Board: {}", board);
+            return board;
+        } catch (TesseractException | RasterFormatException e) {
+            throw new AutomationException(ErrorCode.STARTING_BOARD, e);
+        }
+    }
+
+    public static boolean isBoxWhite(int id) {
+        int[] rgb = getRGB(CARD_POINTERS.get(id));
+        return rgb[0] + rgb[1] + rgb[2] > WHITE_MIN;
+    }
+
+    public static Team cardTeam(Point point) {
+        int[] rgb = getRGB(point.add(COLOR_OFFSET));
+        if (rgb[0] - rgb[2] > RED_DOMINANCE) return Team.RED;
+        if (rgb[2] - rgb[0] > BLUE_DOMINANCE) return Team.BLUE;
+        if (rgb[0] + rgb[1] + rgb[2] > BEIGE_MIN) return Team.BYSTANDER;
+        return Team.ASSASSIN;
+    }
+
+    public static int[] getRGB(Point point) {
+        int rgb = image.getRGB(point.x, point.y);
+        logger.debug("RGB: {}", rgb);
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return new int[]{r, g, b};
+    }
+}
+package util;
+
+public class Point extends java.awt.Point {
+    public Point(int x, int y) {
+        super(x, y);
+    }
+
+    public Point(Point point) {
+        super(point);
+    }
+
+    public Point add(Point point) {
+        return new Point(this.x + point.x, this.y + point.y);
+    }
+
+    public Point addX(int x) {
+        return new Point(this.x + x, this.y);
+    }
+
+    public Point addY(int y) {
+        return new Point(this.x, this.y + y);
+    }
+
+    public Point sub(Point point) {
+        return new Point(this.x - point.x, this.y - point.y);
+    }
+
+    public Point subX(int x) {
+        return new Point(this.x - x, this.y);
+    }
+
+    public Point subY(int y) {
+        return new Point(this.x, this.y - y);
+    }
+
+    public Point newX(int x) {
+        return new Point(x, this.y);
+    }
+
+    public Point newY(int y) {
+        return new Point(this.x, y);
+    }
+}
+package util;
+
+import data.ErrorCode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class SleepingBeauty {
+    private static final Logger logger = LogManager.getLogger(SleepingBeauty.class);
+
+    public static void sleep(long milliseconds) {
+        try {
+            if (milliseconds < 0) return;
+            logger.info("Sleeping for {}ms", milliseconds);
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            throw new AutomationException(ErrorCode.SLEEP_INTERRUPTED, e);
+        }
+    }
+
+    public static void sleep(int seconds) {
+        sleep(seconds * 1000L);
+    }
+
+    public static void sleep(double seconds) {
+        sleep((long) (seconds * 1000L));
+    }
+
+    public static void sleep(float seconds) {
+        sleep((long) (seconds * 1000L));
+    }
+
+    // Bell Curve with extremes being 2/3 and 4/3
+    public static void randSleep(long milliseconds) {
+        double random = Math.random() + Math.random() - Math.random() - Math.random();
+        long deviation = (long) (milliseconds * random / 6);
+        sleep(milliseconds + deviation);
+    }
+
+    public static void randSleep(int seconds) {
+        randSleep(seconds * 1000L);
+    }
+
+    public static void randSleep(double seconds) {
+        randSleep((long) (seconds * 1000L));
+    }
+
+    public static void randSleep(float seconds) {
+        randSleep((long) (seconds * 1000L));
+    }
+}
