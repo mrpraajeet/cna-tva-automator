@@ -37,7 +37,7 @@ public class ExecuteCommand {
             }
 
             if (process.waitFor() != 0) throw new AutomationException(ErrorCode.PROCESS_EXIT);
-            logger.info("Output of the command: {}", output.toString());
+            logger.debug("Output of the command: {}", output.toString());
         } catch (IOException | InterruptedException e) {
             throw new AutomationException(ErrorCode.EXECUTE_COMMAND, e);
         }

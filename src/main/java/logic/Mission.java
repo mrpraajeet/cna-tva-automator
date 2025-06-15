@@ -28,7 +28,7 @@ public class Mission {
 
     public Mission(boolean firstMission) {
         this.spymasterUser = Math.random() < SECURE_USER_SPYMASTER ? SECURE_USER : UNSECURE_USER;
-        logger.info("Spymaster for this user: {}", spymasterUser);
+        logger.info("Spymaster for this mission: {}", spymasterUser);
         this.spymaster = new GeminiSpymaster();
         this.isFlipped = new boolean[CARD_POINTERS.size()];
 
